@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Usuario {
+  id            Int             @id @default(autoincrement())
+  usuario       String          @unique
+  nombre        String
+  email         String          @unique
+  clave         String
+  saldo         Float           @default(0)
+  coins         Float           @default(0)
+  rol           String          @default("jugador")
+  activo        Boolean         @default(true)
+  fechaCreacion DateTime        @default(now())
+  jugadas       Jugada[]
+  notificaciones Notificacion[]
+}
+
+model Anno {
+  id     Int    @id @default(autoincrement())
+  anno   Int    @unique
+  activo Boolean @default(false)
+  meses  Mes[]
+}
+
+model Mes {
+  id              Int      @id @default(autoincrement())
+  annoId          Int
+  anno            Anno     @relation(fields: [annoId], references: [id])
+  mes             Int
+  nombre          String
+  activo          Boolean  @default(true)
+  limiteCoins     Float    @default(0)
+  limiteConsumido Float    @default(0)
+  jugadas         Jugada[]
+}
+
+model Rango {
+  id        Int    @id @default(autoincrement())
+  tipo      String
+  numeroMin Int
+  numeroMax Int
+  montoMin  Float
+  montoMax  Float
+}
+
+model JugadaDiaria {
+  id     Int      @id @default(autoincrement())
+  fecha  DateTime
+  sorteo String
+  numero String
+  tipo   String
+  anno   Int
+  mes    Int
+}
+
+model Jugada {
+  id          Int      @id @default(autoincrement())
+  usuarioId   Int
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  numero      String
+  monto       Float
+  tipo        String
+  numeroFijo  String?
+  combinacion String?
+  mesId       Int
+  mes         Mes      @relation(fields: [mesId], references: [id])
+  fecha       DateTime @default(now())
+  estado      String   @default("activa")
+  ticket      Ticket?
+}
+
+model Ticket {
+  id           Int     @id @default(autoincrement())
+  jugadaId     Int     @unique
+  jugada       Jugada  @relation(fields: [jugadaId], references: [id])
+  numeroTicket String  @unique
+  fecha        DateTime @default(now())
+  estado       String  @default("pendiente")
+  monto        Float
+}
+
+model Notificacion {
+  id        Int     @id @default(autoincrement())
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  mensaje   String
+  leida     Boolean @default(false)
+  fecha     DateTime @default(now())
+}
+
+model Configuracion {
+  id    Int    @id @default(autoincrement())
+  clave String @unique
+  valor String
+}
+
+model NumeroDeshabilitado {
+  id     Int    @id @default(autoincrement())
+  numero String
+  tipo   String
+  mesId  Int
+  activo Boolean @default(true)
+}
