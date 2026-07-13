@@ -1,16 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import * as bcrypt from 'bcryptjs';
 import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import * as bcrypt from 'bcryptjs';
 
-// Override DATABASE_URL to point to our local dev.db
-process.env.DATABASE_URL = `file:${resolve(fileURLToPath(new URL('.', import.meta.url)), '..', 'dev.db')}`;
-
+const dbPath = resolve(process.cwd(), 'prisma', 'dev.db');
 const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL,
+  url: `file:${dbPath}`,
 });
-
 const prisma = new PrismaClient({ adapter });
 
 const MESES_NOMBRES = [
@@ -19,9 +15,8 @@ const MESES_NOMBRES = [
 ];
 
 async function main() {
-  console.log('🌱 Seeding database...');
+  console.log('Seeding database...');
 
-  // Create test user
   const hashedPassword = await bcrypt.hash('123456', 10);
   const hashedAdminPassword = await bcrypt.hash('admin123', 10);
 
@@ -53,9 +48,8 @@ async function main() {
     },
   });
 
-  console.log(`✅ Created users: ${jugador.usuario}, ${admin.usuario}`);
+  console.log(`Created users: ${jugador.usuario}, ${admin.usuario}`);
 
-  // Create year 2024 as active
   const anno = await prisma.anno.upsert({
     where: { anno: 2024 },
     update: { activo: true },
@@ -65,9 +59,8 @@ async function main() {
     },
   });
 
-  console.log(`✅ Created year: ${anno.anno}`);
+  console.log(`Created year: ${anno.anno}`);
 
-  // Create all 12 months for 2024
   for (let i = 1; i <= 12; i++) {
     const mesExistente = await prisma.mes.findFirst({
       where: { annoId: anno.id, mes: i },
@@ -87,10 +80,9 @@ async function main() {
     }
   }
 
-  console.log('✅ Created 12 months for 2024');
+  console.log('Created 12 months for 2024');
 
-  // Create ranges
-  const miniRange = await prisma.rango.upsert({
+  await prisma.rango.upsert({
     where: { id: 1 },
     update: {},
     create: {
@@ -102,7 +94,7 @@ async function main() {
     },
   });
 
-  const grandeRange = await prisma.rango.upsert({
+  await prisma.rango.upsert({
     where: { id: 2 },
     update: {},
     create: {
@@ -114,13 +106,11 @@ async function main() {
     },
   });
 
-  console.log('✅ Created ranges: mini, grande');
+  console.log('Created ranges: mini, grande');
 
-  // Create sample JugadaDiaria for today
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Check if today's results already exist
   const existingResults = await prisma.jugadaDiaria.findMany({
     where: { fecha: today },
   });
@@ -163,10 +153,9 @@ async function main() {
       ],
     });
 
-    console.log('✅ Created sample JugadaDiaria for today');
+    console.log('Created sample JugadaDiaria for today');
   }
 
-  // Create sample notifications
   const existingNotifs = await prisma.notificacion.findMany({
     where: { usuarioId: jugador.id },
   });
@@ -176,7 +165,7 @@ async function main() {
       data: [
         {
           usuarioId: jugador.id,
-          mensaje: '¡Bienvenido a DPlay! Tu cuenta ha sido creada exitosamente.',
+          mensaje: 'Bienvenido a DPlay! Tu cuenta ha sido creada exitosamente.',
           leida: false,
         },
         {
@@ -186,16 +175,15 @@ async function main() {
         },
         {
           usuarioId: jugador.id,
-          mensaje: 'Recuerda que puedes consultar tus resultados diarios en la sección de resultados.',
+          mensaje: 'Recuerda que puedes consultar tus resultados diarios en la seccion de resultados.',
           leida: true,
         },
       ],
     });
 
-    console.log('✅ Created sample notifications');
+    console.log('Created sample notifications');
   }
 
-  // Create configuration values
   await prisma.configuracion.upsert({
     where: { clave: 'habilitada' },
     update: {},
@@ -214,8 +202,8 @@ async function main() {
     create: { clave: 'horaNoche', valor: '20:00' },
   });
 
-  console.log('✅ Created configuration values');
-  console.log('🎉 Seed completed successfully!');
+  console.log('Created configuration values');
+  console.log('Seed completed successfully!');
 }
 
 main()

@@ -9,7 +9,7 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
-    const dbPath = resolve(process.cwd(), 'dev.db');
+    const dbPath = resolve(process.cwd(), 'prisma', 'dev.db');
     const adapter = new PrismaBetterSqlite3({
       url: `file:${dbPath}`,
     });
